@@ -1,23 +1,9 @@
 import cv2
-def socket():
-    import socket
-    cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    cliente.connect(('localhost', 8050))
+import socket
+from random import choice
 
-    
-    file = open('I:/UAQ/Quinto/SD/Proyecto/github/Client-Server-Encrypt-Image/encriptado.png', 'rb')
 
-    image_data  = file.read(2048)
-
-    while image_data:
-        cliente.send(image_data)
-        image_data  = file.read(2048)
-    
-
-    file.close()
-    cliente.close()
- 
-def encriptar():
+def encriptar(path_Destino):
     #Asignamos los valores de la llave
     
     key = "123"
@@ -25,7 +11,7 @@ def encriptar():
    
     try:
             # le mandamos el path de la imagen que queremos encriptar
-        path = "I:/UAQ/Quinto/SD/Proyecto/github/Client-Server-Encrypt-Image/encriptado.png"
+        path = path_Destino + "/encriptado.png"
             
             # pedimos la llave para poder encriptar
         key =input('Ingresa el valor de la llave para encriptar : ')
@@ -63,28 +49,28 @@ def encriptar():
 
     except Exception :
         print('Error', Exception.__name__)
-
   
-
-def copiar():
-    
+def copiar(path_Inicio, path_Destino):
     
     #vamos a copiar la imagen para así en un futuro comparar la imagen original y la desencriptada
     #primero inicio abriendo la imagen con opencv
-    imagen = cv2.imread(imagen_path)
+    imagen = cv2.imread(path_Inicio)
     #y despues solo copio la imagen original
-    cv2.imwrite("encriptado.png", imagen)
+    path_nuevo = path_Destino + "/encriptado.png"
+    print ("\n\n"+path_Destino)
+    print('asdads')
+    print(path_nuevo)
+    cv2.imwrite(path_nuevo, imagen)
     
-
-def comparar_img():
+def comparar_img(path_Inicio,path_Destino):
 
     #para comparar las imagenes necesitamos abrir las 2
     """
     Aqui uds tiene que ver lo de las rutas y cambiarlo para no tener problemas con rutas diferentes para
     para el ejemplo solo puse mis rutas
     """
-    original= cv2.imread('I:/UAQ/Quinto/SD/Proyecto/diagrama.png')
-    desencriptada = cv2.imread('I:/UAQ/Quinto/SD/Proyecto/server_image.png')
+    original= cv2.imread(path_Inicio)
+    desencriptada = cv2.imread(path_Destino + '/desencriptado.png')
 
     #Aqui solo estoy sacando el tamaño de las imagenes para despues comparar y ver si son iguales
     originalImg = original.shape
@@ -106,23 +92,69 @@ def comparar_img():
         else:
             print("las imagenes no son iguales")
 
+def recibir(path_Destino):
+    import socket
 
-         
-imagen_path = input("Ingrese el path de la imagen ")
+   
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    
+    server.bind(('localhost', 9000))
+   
+    server.listen()
+
+   
+    client_socket, client_address= server.accept()
+
+    file = open(path_Destino+'/desencriptado.png', "wb")
+    image_chunk = client_socket.recv(2048)
+
+    print('123')
+    while image_chunk:
+        file.write(image_chunk)
+        image_chunk = client_socket.recv(2048)
 
 
-copiar()
+    file.close()
+    client_socket.close()
 
-encriptar()
+def main():
+    
+    longitud = 18
 
-socket()
+    valores = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ<=>@#%&+"
 
-"""
-La razon por la que esta funcion esta desactivada es porque tienen que encontrar la forma de que se ejecute despues
-de que el servidor reenvie la imagen desencriptada
-"""
+    key = ""
+    key = key.join([choice(valores) for i in range(longitud)])
+    print(key)
 
-"""
-Tambien tienen que ver lo de los formatos, porque el chiste es que puedan enviar cualquier formato y ahora no puede
-"""
-# comparar_img()
+    print ("Inciando procesos")
+
+    path_Inicio = input('Meta la ruta de la imagen ')
+    path_Destino = input('Meta la ruta donde quiera que se guarde ' )
+
+    copiar(path_Inicio, path_Destino)
+    encriptar(path_Destino)
+
+    cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    cliente.connect(('localhost', 8050))
+
+    file = open(path_Destino +'/encriptado.png', 'rb')
+
+    cliente.send(key.encode('ascii'))
+    image_data  = file.read(2048)
+
+    while image_data:
+        cliente.send(image_data)
+        image_data  = file.read(2048)
+   
+    file.close()
+    cliente.close()
+
+
+    recibir(path_Destino)
+
+    comparar_img(path_Inicio, path_Destino)
+
+main()
+
+# I:/UAQ/Quinto/SD/Proyecto/github/Client-Server-Encrypt-Image/Servidor
