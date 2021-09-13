@@ -2,6 +2,7 @@ import cv2
 import os
 import socket
 
+
 def socket():
     import socket
 
@@ -17,9 +18,12 @@ def socket():
     client_socket, client_address= server.accept()
 
     file = open('server_image.png', "wb")
+    llave_send = client_socket.recv(1024)
+    llave = llave_send.decode("utf-8")
+
+    print(llave_send.decode("utf-8"))
     image_chunk = client_socket.recv(2048) #stream base protocol, solo podemos recibir pocos datos
-
-
+   
     while image_chunk:
         file.write(image_chunk)
         image_chunk = client_socket.recv(2048)
@@ -27,16 +31,17 @@ def socket():
 
     file.close()
     client_socket.close()
+    return llave_send.decode("utf-8")
 
-
-def desencriptar():
+def desencriptar(llave):
     
     try:
         # tomamos el path de la imagen a desencriptar
         path = "server_image.png"
         
         # pedimos el valor de la llave
-        key =input('Ingresa el valor de la llave para encriptar : ')
+        # key =input('Ingresa el valor de la llave para encriptar : ')
+        key = llave
         key = bytes(key, 'ascii')
         # Imprimo los valores que estamos ocupando para verificar que este bien
         print('la direccion de la imagen es: ', path)
@@ -88,13 +93,11 @@ def enviar():
     cliente.close() 
 
 
-"""
-Tienen que crear una funcion que reenvie la imagen ya desencriptada al cliente para que este pueda verificar si son
-correctas
-"""
+def main():
 
-    
-socket()
-desencriptar()
-enviar()
+    while True:
+        llave = socket()
+        desencriptar(llave)
+        enviar()
 
+main()
