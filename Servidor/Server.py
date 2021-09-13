@@ -2,7 +2,8 @@ import cv2
 import os
 import socket
 
-
+extension =""
+llave = ""
 def socket():
     import socket
 
@@ -17,11 +18,18 @@ def socket():
     #Instanciamos un objeto socket cliente para recibir datos
     client_socket, client_address= server.accept()
 
-    file = open('server_image.png', "wb")
-    llave_send = client_socket.recv(1024)
+    global extension
+    extension = client_socket.recv(10)
+    extension = extension.decode("utf-8")
+
+    file = open('server_image' + extension, "wb")
+
+    global llave 
+    llave_send = client_socket.recv(18)
     llave = llave_send.decode("utf-8")
 
-    print(llave_send.decode("utf-8"))
+   
+
     image_chunk = client_socket.recv(2048) #stream base protocol, solo podemos recibir pocos datos
    
     while image_chunk:
@@ -31,13 +39,13 @@ def socket():
 
     file.close()
     client_socket.close()
-    return llave_send.decode("utf-8")
 
-def desencriptar(llave):
+
+def desencriptar():
     
     try:
         # tomamos el path de la imagen a desencriptar
-        path = "server_image.png"
+        path = "server_image" + extension
         
         # pedimos el valor de la llave
         # key =input('Ingresa el valor de la llave para encriptar : ')
@@ -79,7 +87,7 @@ def enviar():
     cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     cliente.connect(('localhost', 9000))
 
-    path_recibido = os.path.abspath(os.getcwd()) + '/server_image.png'
+    path_recibido = os.path.abspath(os.getcwd()) + '/server_image' + extension
     file = open(path_recibido, 'rb')
 
     image_data  = file.read(2048)
@@ -96,8 +104,8 @@ def enviar():
 def main():
 
     while True:
-        llave = socket()
-        desencriptar(llave)
+        socket()
+        desencriptar()
         enviar()
 
 main()

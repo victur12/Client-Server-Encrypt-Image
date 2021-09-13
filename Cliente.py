@@ -1,9 +1,10 @@
 import cv2
 import socket
+import os
 from random import choice
 
 
-def encriptar(path_Destino):
+def encriptar(path_Destino, extension):
     #Asignamos los valores de la llave
     
     key = "123"
@@ -11,7 +12,7 @@ def encriptar(path_Destino):
    
     try:
             # le mandamos el path de la imagen que queremos encriptar
-        path = path_Destino + "/encriptado.png"
+        path = path_Destino + "/encriptado" + extension
             
             # pedimos la llave para poder encriptar
         key =input('Ingresa el valor de la llave para encriptar : ')
@@ -50,19 +51,16 @@ def encriptar(path_Destino):
     except Exception :
         print('Error', Exception.__name__)
   
-def copiar(path_Inicio, path_Destino):
+def copiar(path_Inicio, path_Destino, extension):
     
     #vamos a copiar la imagen para así en un futuro comparar la imagen original y la desencriptada
     #primero inicio abriendo la imagen con opencv
     imagen = cv2.imread(path_Inicio)
     #y despues solo copio la imagen original
-    path_nuevo = path_Destino + "/encriptado.png"
-    print ("\n\n"+path_Destino)
-    print('asdads')
-    print(path_nuevo)
+    path_nuevo = path_Destino + "/encriptado" +extension
     cv2.imwrite(path_nuevo, imagen)
     
-def comparar_img(path_Inicio,path_Destino):
+def comparar_img(path_Inicio,path_Destino, extension):
 
     #para comparar las imagenes necesitamos abrir las 2
     """
@@ -70,7 +68,7 @@ def comparar_img(path_Inicio,path_Destino):
     para el ejemplo solo puse mis rutas
     """
     original= cv2.imread(path_Inicio)
-    desencriptada = cv2.imread(path_Destino + '/desencriptado.png')
+    desencriptada = cv2.imread(path_Destino + '/desencriptado'+ extension)
 
     #Aqui solo estoy sacando el tamaño de las imagenes para despues comparar y ver si son iguales
     originalImg = original.shape
@@ -92,7 +90,7 @@ def comparar_img(path_Inicio,path_Destino):
         else:
             print("las imagenes no son iguales")
 
-def recibir(path_Destino):
+def recibir(path_Destino, extension):
     import socket
 
    
@@ -105,7 +103,7 @@ def recibir(path_Destino):
    
     client_socket, client_address= server.accept()
 
-    file = open(path_Destino+'/desencriptado.png', "wb")
+    file = open(path_Destino+'/desencriptado' + extension, "wb")
     image_chunk = client_socket.recv(2048)
 
     print('123')
@@ -132,15 +130,21 @@ def main():
     path_Inicio = input('Meta la ruta de la imagen ')
     path_Destino = input('Meta la ruta donde quiera que se guarde ' )
 
-    copiar(path_Inicio, path_Destino)
-    encriptar(path_Destino)
+    root, extension =os.path.splitext(path_Inicio)
+
+
+    copiar(path_Inicio, path_Destino, extension)
+    encriptar(path_Destino, extension)
 
     cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     cliente.connect(('localhost', 8050))
 
-    file = open(path_Destino +'/encriptado.png', 'rb')
+    file = open(path_Destino +'/encriptado' + extension, 'rb')
+
+    cliente.send(extension.encode('ascii'))
 
     cliente.send(key.encode('ascii'))
+    
     image_data  = file.read(2048)
 
     while image_data:
@@ -151,9 +155,9 @@ def main():
     cliente.close()
 
 
-    recibir(path_Destino)
+    recibir(path_Destino, extension)
 
-    comparar_img(path_Inicio, path_Destino)
+    comparar_img(path_Inicio, path_Destino, extension)
 
 main()
 
