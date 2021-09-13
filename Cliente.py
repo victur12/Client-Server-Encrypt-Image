@@ -7,8 +7,6 @@ from random import choice
 def encriptar(path_Destino, extension):
     #Asignamos los valores de la llave
     
-    key = "123"
-    
    
     try:
             # le mandamos el path de la imagen que queremos encriptar
@@ -123,7 +121,7 @@ def main():
 
     key = ""
     key = key.join([choice(valores) for i in range(longitud)])
-    print(key)
+    print('Esta es la llave que van a ocupar \n'+ key)
 
     print ("Inciando procesos")
 
